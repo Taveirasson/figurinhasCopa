@@ -1,3 +1,4 @@
+import { Route } from "@/navigation/types";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -15,14 +16,6 @@ import { FaltandoScreen } from "../screens/FaltandoScreen";
 import { RepetidasScreen } from "../screens/RepetidasScreen";
 import { TeamScreen } from "../screens/TeamScreen";
 import { TenhoScreen } from "../screens/TenhoScreen";
-
-type Route =
-  | { name: "home" }
-  | { name: "team"; params: { teamId: string } }
-  | { name: "repetidas" }
-  | { name: "data" }
-  | { name: "faltando" }
-  | { name: "tenho" };
 
 export default function Index() {
   const scheme = useColorScheme();

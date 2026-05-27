@@ -20,81 +20,59 @@ export const HomeScreen: React.FC<{
   const { colors } = useTheme();
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
-    >
-      <Text style={[styles.title, { color: colors.text }]}>
-        Meu Álbum - Copa 2026
-      </Text>
-      <ProgressoAlbum album={album} />
-      <View style={styles.list}>
-        {album.map((t) => (
-          <TouchableOpacity
-            key={t.id}
-            style={[styles.team, { borderColor: colors.border }]}
-            onPress={() => navigate("team", { teamId: t.id })}
-          >
-            <Text style={[styles.teamText, { color: colors.text }]}>
-              {t.nome} - {t.id}
-            </Text>
-            {(() => {
-              const total = t.figurinhas.length;
-              const tenho = t.figurinhas.filter(
-                (f) => f.status === "tenho" || f.status === "repetida",
-              ).length;
-              const repetidas = t.figurinhas.filter(
-                (f) => f.status === "repetida",
-              ).length;
-              return (
-                <Text style={[styles.teamSub, { color: colors.muted }]}>
-                  Total: {total} — Tenho: {tenho} — Repetidas: {repetidas}
-                </Text>
-              );
-            })()}
-          </TouchableOpacity>
-        ))}
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Meu Álbum - Copa 2026
+        </Text>
+        <ProgressoAlbum album={album} navigate={navigate} />
       </View>
 
-      <TouchableOpacity style={styles.link} onPress={() => navigate("tenho")}>
-        <Text style={[styles.linkText, { color: colors.primary }]}>
-          Ver adquiridas
-        </Text>
-      </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.list}>
+          {album.map((t) => (
+            <TouchableOpacity
+              key={t.id}
+              style={[styles.team, { borderColor: colors.border }]}
+              onPress={() => navigate("team", { teamId: t.id })}
+            >
+              <Text style={[styles.teamText, { color: colors.text }]}>
+                {t.nome} - {t.id}
+              </Text>
+              {(() => {
+                const total = t.figurinhas.length;
+                const tenho = t.figurinhas.filter(
+                  (f) => f.status === "tenho" || f.status === "repetida",
+                ).length;
+                const repetidas = t.figurinhas.filter(
+                  (f) => f.status === "repetida",
+                ).length;
+                return (
+                  <Text style={[styles.teamSub, { color: colors.muted }]}>
+                    Total: {total} — Tenho: {tenho} — Repetidas: {repetidas}
+                  </Text>
+                );
+              })()}
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <TouchableOpacity
-        style={styles.link}
-        onPress={() => navigate("repetidas")}
-      >
-        <Text style={[styles.linkText, { color: colors.primary }]}>
-          Ver repetidas
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.link}
-        onPress={() => navigate("faltando")}
-      >
-        <Text style={[styles.linkText, { color: colors.primary }]}>
-          Ver faltando
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.link, { marginTop: 8 }]}
-        onPress={() => navigate("data")}
-      >
-        <Text style={[styles.linkText, { color: colors.primary }]}>
-          Gerenciar dados do álbum
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity
+          style={[styles.link, { marginTop: 8 }]}
+          onPress={() => navigate("data")}
+        >
+          <Text style={[styles.linkText, { color: colors.primary }]}>
+            Gerenciar dados do álbum
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  header: { padding: 16 },
   container: { padding: 16 },
   title: { fontSize: 20, fontWeight: "700", marginBottom: 12 },
   search: {
