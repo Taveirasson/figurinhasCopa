@@ -156,26 +156,26 @@ const TEAMS_GROUPS = {
 
 const others: Time[] = [
   {
-    id: "COCA",
-    nome: "Coca-Cola",
-    totalFigurinha: 14,
-    completo: false,
-    figurinhas: Array.from({ length: 14 }).map((_, i) => ({
-      id: `COCA-${(i + 1).toString().padStart(3, "0")}`,
-      pais: "Coca-Cola",
-      numero: i + 1,
-      status: "falta" as Status,
-      quantidade: 0,
-    })),
-  },
-  {
     id: "FWC",
     nome: "Panini",
     totalFigurinha: 20,
     completo: false,
     figurinhas: Array.from({ length: 20 }).map((_, i) => ({
-      id: `FWC-${(i + 1).toString().padStart(3, "0")}`,
+      id: `FWC-${i.toString().padStart(2, "0")}`,
       pais: "Panini",
+      numero: i,
+      status: "falta" as Status,
+      quantidade: 0,
+    })),
+  },
+  {
+    id: "COCA",
+    nome: "Coca-Cola",
+    totalFigurinha: 14,
+    completo: false,
+    figurinhas: Array.from({ length: 14 }).map((_, i) => ({
+      id: `COCA-${(i + 1).toString().padStart(2, "0")}`,
+      pais: "Coca-Cola",
       numero: i + 1,
       status: "falta" as Status,
       quantidade: 0,
@@ -184,18 +184,19 @@ const others: Time[] = [
 ];
 
 export const TIMES: Time[] = [
+  ...others.filter((t) => t.id === "FWC"),
   ...TEAMS_LIST.map((t) => ({
     id: t.id,
     nome: t.nome,
     totalFigurinha: 20,
     completo: false,
     figurinhas: Array.from({ length: 20 }).map((_, i) => ({
-      id: `${t.id}-${(i + 1).toString().padStart(3, "0")}`,
+      id: `${t.id}-${(i + 1).toString().padStart(2, "0")}`,
       pais: t.nome,
       numero: i + 1,
       status: "falta" as Status,
       quantidade: 0,
     })),
   })),
-  ...others,
+  ...others.filter((t) => t.id !== "FWC"),
 ];
