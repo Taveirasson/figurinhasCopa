@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import BackButton from "../components/BackButton";
 import { ListaFigurinhas } from "../components/ListaFigurinhas";
 import { useAlbum } from "../context/AlbumContext";
+import { selectTeamIdByStickerId, selectTenho } from "../context/selectors";
 import { useTheme } from "../theme";
 
 type RouteName = "home" | "team" | "repetidas" | "data" | "faltando" | "tenho";
@@ -12,9 +13,7 @@ export const TenhoScreen: React.FC<{
 }> = ({ navigate }) => {
   const { colors } = useTheme();
   const { album, toggleStatus } = useAlbum();
-  const tenho = album.flatMap((t) =>
-    t.figurinhas.filter((f) => f.status === "tenho" || f.status === "repetida"),
-  );
+  const tenho = selectTenho(album);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -25,8 +24,8 @@ export const TenhoScreen: React.FC<{
       <ListaFigurinhas
         data={tenho}
         onToggle={(id) => {
-          const team = album.find((t) => t.figurinhas.some((f) => f.id === id));
-          if (team) toggleStatus(team.id, id);
+          const teamId = selectTeamIdByStickerId(album, id);
+          if (teamId) toggleStatus(teamId, id);
         }}
       />
     </View>

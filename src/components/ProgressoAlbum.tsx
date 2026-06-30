@@ -1,6 +1,7 @@
 import { Route } from "@/navigation/types";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { selectAlbumStats } from "../context/selectors";
 import { Time } from "../data/album";
 import { useTheme } from "../theme";
 
@@ -8,17 +9,7 @@ export const ProgressoAlbum: React.FC<{
   album: Time[];
   navigate: (name: Route["name"], params?: any) => void;
 }> = ({ album, navigate }) => {
-  const totals = album.reduce(
-    (acc, t) => {
-      acc.total += t.figurinhas.length;
-      t.figurinhas.forEach((f) => {
-        if (f.status === "tenho" || f.status === "repetida") acc.tenho += 1;
-        if (f.status === "repetida") acc.repetida += f?.quantidade || 1;
-      });
-      return acc;
-    },
-    { total: 0, tenho: 0, repetida: 0 },
-  );
+  const totals = selectAlbumStats(album);
 
   const { colors } = useTheme();
 
@@ -49,7 +40,7 @@ export const ProgressoAlbum: React.FC<{
           style={styles.itemTouchable}
         >
           <Text style={[styles.itemLink, { color: colors.primary }]}>
-            Faltam: {totals.total - totals.tenho}
+            Faltam: {totals.faltando}
           </Text>
         </TouchableOpacity>
       </View>

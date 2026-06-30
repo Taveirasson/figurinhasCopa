@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Figurinha, Time, TIMES } from "../data/album";
+import { mergeAlbumWithDefaults, parseAlbumPayload } from "./albumPersistence";
+import { getNextStatus } from "./statusTransitions";
 
 const STORAGE_KEY = "@figurinha_album_v1";
 
@@ -30,44 +32,35 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (!active) return;
+
         if (raw) {
-          const stored: Time[] = JSON.parse(raw);
-          // Merge stored album with default TIMES to ensure all teams/stickers exist
-          const merged = TIMES.map((baseTeam) => {
-            const storedTeam = stored.find((t) => t.id === baseTeam.id);
-            if (!storedTeam) return baseTeam;
-            // ensure all stickers from baseTeam exist, preserving stored status/nome/quantidade
-            const stickers = baseTeam.figurinhas.map((bf) => {
-              const sf = storedTeam.figurinhas.find((s) => s.id === bf.id);
-              return sf
-                ? {
-                    ...bf,
-                    nome: sf.nome ?? bf.nome,
-                    status: sf.status,
-                    quantidade: sf.quantidade,
-                  }
-                : bf;
-            });
-            return { ...baseTeam, figurinhas: stickers };
-          });
-          // Append any teams present in stored but not in base TIMES (preserve user data)
-          const extraTeams = stored.filter(
-            (t) => !TIMES.some((bt) => bt.id === t.id),
-          );
-          setAlbum([...merged, ...extraTeams]);
+          const stored = parseAlbumPayload(raw);
+          if (!active) return;
+          setAlbum(mergeAlbumWithDefaults(stored, TIMES));
         } else {
+          if (!active) return;
           setAlbum(TIMES);
         }
       } catch (e) {
+        if (!active) return;
         console.warn("Failed to load album", e);
         setAlbum(TIMES);
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -90,35 +83,9 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const importAlbum = async (raw: string) => {
     try {
-      const parsed = JSON.parse(raw) as any;
-      // support both { album: [...] } and raw array
-      const imported: Time[] = Array.isArray(parsed)
-        ? parsed
-        : (parsed.album ?? parsed.data ?? []);
-
-      // Merge imported with default TIMES to ensure base stickers exist
-      const merged = TIMES.map((baseTeam) => {
-        const importedTeam = imported.find((t) => t.id === baseTeam.id);
-        if (!importedTeam) return baseTeam;
-        const stickers = baseTeam.figurinhas.map((bf) => {
-          const sf = importedTeam.figurinhas?.find((s: any) => s.id === bf.id);
-          return sf
-            ? {
-                ...bf,
-                nome: sf.nome ?? bf.nome,
-                status: sf.status ?? bf.status,
-                quantidade: sf.quantidade ?? bf.quantidade,
-              }
-            : bf;
-        });
-        return { ...baseTeam, figurinhas: stickers };
-      });
-      const extraTeams = imported.filter(
-        (t) => !TIMES.some((bt) => bt.id === t.id),
-      );
-      const newAlbum = [...merged, ...extraTeams];
+      const imported = parseAlbumPayload(raw);
+      const newAlbum = mergeAlbumWithDefaults(imported, TIMES);
       setAlbum(newAlbum);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newAlbum));
     } catch (e) {
       console.warn("Failed to import album", e);
       throw e;
@@ -159,12 +126,7 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!team) return;
     const sticker = team.figurinhas.find((f) => f.id === stickerId);
     if (!sticker) return;
-    const next =
-      sticker.status === "falta"
-        ? "tenho"
-        : sticker.status === "tenho"
-          ? "repetida"
-          : "falta";
+    const next = getNextStatus(sticker.status);
     setStatus(teamId, stickerId, next);
   };
 

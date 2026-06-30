@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import BackButton from "../components/BackButton";
 import { ListaFigurinhas } from "../components/ListaFigurinhas";
 import { useAlbum } from "../context/AlbumContext";
+import { selectRepetidas, selectTeamIdByStickerId } from "../context/selectors";
 
 export const RepetidasScreen: React.FC<{
   navigate: (
@@ -11,9 +12,7 @@ export const RepetidasScreen: React.FC<{
   ) => void;
 }> = ({ navigate }) => {
   const { album, toggleStatus } = useAlbum();
-  const repetidas = album.flatMap((t) =>
-    t.figurinhas.filter((f) => f.status === "repetida"),
-  );
+  const repetidas = selectRepetidas(album);
 
   return (
     <View style={styles.container}>
@@ -22,9 +21,8 @@ export const RepetidasScreen: React.FC<{
       <ListaFigurinhas
         data={repetidas}
         onToggle={(id) => {
-          // find teamId for this sticker
-          const team = album.find((t) => t.figurinhas.some((f) => f.id === id));
-          if (team) toggleStatus(team.id, id);
+          const teamId = selectTeamIdByStickerId(album, id);
+          if (teamId) toggleStatus(teamId, id);
         }}
       />
     </View>

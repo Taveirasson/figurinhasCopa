@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { ProgressoAlbum } from "../components/ProgressoAlbum";
 import { useAlbum } from "../context/AlbumContext";
+import { selectTeamStats } from "../context/selectors";
 import { useTheme } from "../theme";
 
 export const HomeScreen: React.FC<{
@@ -40,16 +41,11 @@ export const HomeScreen: React.FC<{
                 {t.nome} - {t.id}
               </Text>
               {(() => {
-                const total = t.figurinhas.length;
-                const tenho = t.figurinhas.filter(
-                  (f) => f.status === "tenho" || f.status === "repetida",
-                ).length;
-                const repetidas = t.figurinhas.filter(
-                  (f) => f.status === "repetida",
-                ).length;
+                const teamStats = selectTeamStats(t);
                 return (
                   <Text style={[styles.teamSub, { color: colors.muted }]}>
-                    Total: {total} — Tenho: {tenho} — Repetidas: {repetidas}
+                    Total: {teamStats.total} — Tenho: {teamStats.tenho} —
+                    Repetidas: {teamStats.repetidas}
                   </Text>
                 );
               })()}

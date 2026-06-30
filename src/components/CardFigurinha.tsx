@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAlbum } from "../context/AlbumContext";
+import { selectTeamIdByStickerId } from "../context/selectors";
 import { Figurinha } from "../data/album";
 import { useTheme } from "../theme";
 
@@ -18,6 +19,7 @@ export const CardFigurinha: React.FC<{
 
   const { album, updateQuantity, setStatus } = useAlbum();
   const { colors } = useTheme();
+  const teamId = selectTeamIdByStickerId(album, figurinha.id);
 
   return (
     <View
@@ -45,11 +47,8 @@ export const CardFigurinha: React.FC<{
                   onPress={() => {
                     const current = Math.max(1, figurinha.quantidade ?? 1);
                     if (current <= 1) return;
-                    const team = album.find((t) =>
-                      t.figurinhas.some((f) => f.id === figurinha.id),
-                    );
-                    if (!team) return;
-                    updateQuantity(team.id, figurinha.id, -1);
+                    if (!teamId) return;
+                    updateQuantity(teamId, figurinha.id, -1);
                   }}
                   disabled={(figurinha.quantidade ?? 1) <= 1}
                   style={[
@@ -79,11 +78,8 @@ export const CardFigurinha: React.FC<{
 
                 <TouchableOpacity
                   onPress={() => {
-                    const team = album.find((t) =>
-                      t.figurinhas.some((f) => f.id === figurinha.id),
-                    );
-                    if (!team) return;
-                    updateQuantity(team.id, figurinha.id, 1);
+                    if (!teamId) return;
+                    updateQuantity(teamId, figurinha.id, 1);
                   }}
                   style={[
                     styles.counterButton,
@@ -112,11 +108,8 @@ export const CardFigurinha: React.FC<{
                   },
                 ]}
                 onPress={() => {
-                  const team = album.find((t) =>
-                    t.figurinhas.some((f) => f.id === figurinha.id),
-                  );
-                  if (!team) return;
-                  setStatus(team.id, figurinha.id, "falta");
+                  if (!teamId) return;
+                  setStatus(teamId, figurinha.id, "falta");
                 }}
               >
                 <Text
