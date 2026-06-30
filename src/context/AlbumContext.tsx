@@ -1,5 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Figurinha, Time, TIMES } from "../data/album";
 import { mergeAlbumWithDefaults, parseAlbumPayload } from "./albumPersistence";
 import { getNextStatus } from "./statusTransitions";
@@ -9,6 +17,7 @@ const STORAGE_KEY = "@figurinha_album_v1";
 interface AlbumContextValue {
   album: Time[];
   loading: boolean;
+  stickerToTeamId: Record<string, string>;
   toggleStatus: (teamId: string, stickerId: string) => void;
   setStatus: (
     teamId: string,
@@ -71,17 +80,32 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [album, loading]);
 
-  const exportAlbum = async () => {
+  const albumRef = useRef(album);
+  useEffect(() => {
+    albumRef.current = album;
+  }, [album]);
+
+  const stickerToTeamId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const team of album) {
+      for (const f of team.figurinhas) {
+        map[f.id] = team.id;
+      }
+    }
+    return map;
+  }, [album]);
+
+  const exportAlbum = useCallback(async () => {
     try {
-      const data = JSON.stringify(album, null, 2);
+      const data = JSON.stringify(albumRef.current, null, 2);
       return data;
     } catch (e) {
       console.warn("Failed to export album", e);
       throw e;
     }
-  };
+  }, []);
 
-  const importAlbum = async (raw: string) => {
+  const importAlbum = useCallback(async (raw: string) => {
     try {
       const imported = parseAlbumPayload(raw);
       const newAlbum = mergeAlbumWithDefaults(imported, TIMES);
@@ -90,9 +114,9 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
       console.warn("Failed to import album", e);
       throw e;
     }
-  };
+  }, []);
 
-  const clearAlbum = async () => {
+  const clearAlbum = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
       setAlbum(TIMES);
@@ -100,92 +124,114 @@ export const AlbumProvider: React.FC<{ children: React.ReactNode }> = ({
       console.warn("Failed to clear album", e);
       throw e;
     }
-  };
+  }, []);
 
-  const setStatus = (
-    teamId: string,
-    stickerId: string,
-    status: Figurinha["status"],
-  ) => {
-    setAlbum((prev) =>
-      prev.map((t) =>
-        t.id === teamId
-          ? {
-              ...t,
-              figurinhas: t.figurinhas.map((f) =>
-                f.id === stickerId ? { ...f, status } : f,
-              ),
-            }
-          : t,
-      ),
-    );
-  };
+  const setStatus = useCallback(
+    (teamId: string, stickerId: string, status: Figurinha["status"]) => {
+      setAlbum((prev) =>
+        prev.map((t) =>
+          t.id === teamId
+            ? {
+                ...t,
+                figurinhas: t.figurinhas.map((f) =>
+                  f.id === stickerId ? { ...f, status } : f,
+                ),
+              }
+            : t,
+        ),
+      );
+    },
+    [],
+  );
 
-  const toggleStatus = (teamId: string, stickerId: string) => {
-    const team = album.find((t) => t.id === teamId);
-    if (!team) return;
-    const sticker = team.figurinhas.find((f) => f.id === stickerId);
-    if (!sticker) return;
-    const next = getNextStatus(sticker.status);
-    setStatus(teamId, stickerId, next);
-  };
+  const toggleStatus = useCallback(
+    (teamId: string, stickerId: string) => {
+      const team = albumRef.current.find((t) => t.id === teamId);
+      if (!team) return;
+      const sticker = team.figurinhas.find((f) => f.id === stickerId);
+      if (!sticker) return;
+      const next = getNextStatus(sticker.status);
+      setStatus(teamId, stickerId, next);
+    },
+    [setStatus],
+  );
 
-  const updateQuantity = (teamId: string, stickerId: string, delta: number) => {
-    setAlbum((prev) =>
-      prev.map((t) =>
-        t.id === teamId
-          ? {
-              ...t,
-              figurinhas: t.figurinhas.map((f) =>
-                f.id === stickerId
-                  ? {
-                      ...f,
-                      quantidade: Math.max(0, (f.quantidade ?? 0) + delta),
-                    }
-                  : f,
-              ),
-            }
-          : t,
-      ),
-    );
-  };
+  const updateQuantity = useCallback(
+    (teamId: string, stickerId: string, delta: number) => {
+      setAlbum((prev) =>
+        prev.map((t) =>
+          t.id === teamId
+            ? {
+                ...t,
+                figurinhas: t.figurinhas.map((f) =>
+                  f.id === stickerId
+                    ? {
+                        ...f,
+                        quantidade: Math.max(0, (f.quantidade ?? 0) + delta),
+                      }
+                    : f,
+                ),
+              }
+            : t,
+        ),
+      );
+    },
+    [],
+  );
 
-  const setQuantity = (teamId: string, stickerId: string, quantity: number) => {
-    setAlbum((prev) =>
-      prev.map((t) =>
-        t.id === teamId
-          ? {
-              ...t,
-              figurinhas: t.figurinhas.map((f) =>
-                f.id === stickerId
-                  ? { ...f, quantidade: Math.max(0, quantity) }
-                  : f,
-              ),
-            }
-          : t,
-      ),
-    );
-  };
+  const setQuantity = useCallback(
+    (teamId: string, stickerId: string, quantity: number) => {
+      setAlbum((prev) =>
+        prev.map((t) =>
+          t.id === teamId
+            ? {
+                ...t,
+                figurinhas: t.figurinhas.map((f) =>
+                  f.id === stickerId
+                    ? { ...f, quantidade: Math.max(0, quantity) }
+                    : f,
+                ),
+              }
+            : t,
+        ),
+      );
+    },
+    [],
+  );
 
-  const resetAlbum = () => setAlbum(TIMES);
+  const resetAlbum = useCallback(() => setAlbum(TIMES), []);
+
+  const value = useMemo<AlbumContextValue>(
+    () => ({
+      album,
+      loading,
+      stickerToTeamId,
+      toggleStatus,
+      setStatus,
+      updateQuantity,
+      setQuantity,
+      resetAlbum,
+      exportAlbum,
+      importAlbum,
+      clearAlbum,
+    }),
+    [
+      album,
+      loading,
+      stickerToTeamId,
+      toggleStatus,
+      setStatus,
+      updateQuantity,
+      setQuantity,
+      resetAlbum,
+      exportAlbum,
+      importAlbum,
+      clearAlbum,
+    ],
+  );
 
   return (
-    <AlbumContext.Provider
-      value={{
-        album,
-        loading,
-        toggleStatus,
-        setStatus,
-        updateQuantity,
-        setQuantity,
-        resetAlbum,
-        exportAlbum,
-        importAlbum,
-        clearAlbum,
-      }}
-    >
-      {children}
-    </AlbumContext.Provider>
+    <AlbumContext.Provider value={value}>{children}</AlbumContext.Provider>
   );
 };
 

@@ -1,14 +1,14 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAlbum } from "../context/AlbumContext";
-import { selectTeamIdByStickerId } from "../context/selectors";
 import { Figurinha } from "../data/album";
 import { useTheme } from "../theme";
 
-export const CardFigurinha: React.FC<{
+const CardFigurinhaInner: React.FC<{
   figurinha: Figurinha;
+  teamId?: string;
   onToggle: () => void;
-}> = ({ figurinha, onToggle }) => {
+}> = ({ figurinha, teamId, onToggle }) => {
   const isRepe = figurinha.status === "repetida";
   const color =
     figurinha.status === "tenho"
@@ -17,9 +17,8 @@ export const CardFigurinha: React.FC<{
         ? "#ff9800"
         : "#d32f2f";
 
-  const { album, updateQuantity, setStatus } = useAlbum();
+  const { updateQuantity, setStatus } = useAlbum();
   const { colors } = useTheme();
-  const teamId = selectTeamIdByStickerId(album, figurinha.id);
 
   return (
     <View
@@ -151,6 +150,8 @@ export const CardFigurinha: React.FC<{
     </View>
   );
 };
+
+export const CardFigurinha = React.memo(CardFigurinhaInner);
 
 const styles = StyleSheet.create({
   card: {

@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import BackButton from "../components/BackButton";
 import { ListaFigurinhas } from "../components/ListaFigurinhas";
+import { SearchBar } from "../components/SearchBar";
 import { useAlbum } from "../context/AlbumContext";
-import { selectRepetidas, selectTeamIdByStickerId } from "../context/selectors";
+import { selectRepetidas } from "../context/selectors";
+import { useDebounce } from "../hooks/useDebounce";
+import { useTheme } from "../theme";
+import { filterFigurinhas } from "../utils/search";
 
 export const RepetidasScreen: React.FC<{
   navigate: (
@@ -11,20 +15,32 @@ export const RepetidasScreen: React.FC<{
     params?: any,
   ) => void;
 }> = ({ navigate }) => {
-  const { album, toggleStatus } = useAlbum();
-  const repetidas = selectRepetidas(album);
+  const { colors } = useTheme();
+  const { album, stickerToTeamId, toggleStatus } = useAlbum();
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
+  const repetidas = useMemo(() => selectRepetidas(album), [album]);
+  const filtered = useMemo(
+    () => filterFigurinhas(repetidas, debouncedQuery),
+    [repetidas, debouncedQuery],
+  );
+
+  const onToggle = useCallback(
+    (id: string) => {
+      const teamId = stickerToTeamId[id];
+      if (teamId) toggleStatus(teamId, id);
+    },
+    [stickerToTeamId, toggleStatus],
+  );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <BackButton onPress={() => navigate("home")} />
-      <Text style={styles.title}>Repetidas ({repetidas.length})</Text>
-      <ListaFigurinhas
-        data={repetidas}
-        onToggle={(id) => {
-          const teamId = selectTeamIdByStickerId(album, id);
-          if (teamId) toggleStatus(teamId, id);
-        }}
-      />
+      <Text style={[styles.title, { color: colors.text }]}>
+        Repetidas ({repetidas.length})
+      </Text>
+      <SearchBar value={query} onChangeText={setQuery} />
+      <ListaFigurinhas data={filtered} onToggle={onToggle} />
     </View>
   );
 };
