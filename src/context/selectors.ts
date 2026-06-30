@@ -88,3 +88,70 @@ export const selectTeamStats = (team: Time): TeamStats => {
     faltando: total - tenho,
   };
 };
+
+export interface TeamProgress {
+  id: string;
+  nome: string;
+  total: number;
+  tenho: number;
+  percent: number;
+}
+
+export interface AlbumInsights {
+  percent: number;
+  timesCompletos: number;
+  timesTotal: number;
+  mediaPorTime: number;
+  topTime: TeamProgress | null;
+  bottomTime: TeamProgress | null;
+}
+
+export const selectAlbumInsights = (album: Time[]): AlbumInsights => {
+  if (album.length === 0) {
+    return {
+      percent: 0,
+      timesCompletos: 0,
+      timesTotal: 0,
+      mediaPorTime: 0,
+      topTime: null,
+      bottomTime: null,
+    };
+  }
+
+  let totalGeral = 0;
+  let tenhoGeral = 0;
+  let timesCompletos = 0;
+  let top: TeamProgress | null = null;
+  let bottom: TeamProgress | null = null;
+
+  for (const team of album) {
+    const stats = selectTeamStats(team);
+    const percent = stats.total === 0 ? 0 : (stats.tenho / stats.total) * 100;
+    const progress: TeamProgress = {
+      id: team.id,
+      nome: team.nome,
+      total: stats.total,
+      tenho: stats.tenho,
+      percent,
+    };
+
+    totalGeral += stats.total;
+    tenhoGeral += stats.tenho;
+    if (stats.total > 0 && stats.tenho === stats.total) timesCompletos += 1;
+
+    if (!top || percent > top.percent) top = progress;
+    if (!bottom || percent < bottom.percent) bottom = progress;
+  }
+
+  const percent = totalGeral === 0 ? 0 : (tenhoGeral / totalGeral) * 100;
+  const mediaPorTime = tenhoGeral / album.length;
+
+  return {
+    percent,
+    timesCompletos,
+    timesTotal: album.length,
+    mediaPorTime,
+    topTime: top,
+    bottomTime: bottom,
+  };
+};

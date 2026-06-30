@@ -20,6 +20,16 @@ export const HomeScreen: React.FC<{
   const { album, loading, toggleStatus } = useAlbum();
   const { colors } = useTheme();
 
+  const getBadgeColors = (percent: number) => {
+    if (percent >= 80) {
+      return { text: "#2e7d32" };
+    }
+    if (percent >= 40) {
+      return { text: "#ef6c00" };
+    }
+    return { text: "#c62828" };
+  };
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
@@ -31,27 +41,52 @@ export const HomeScreen: React.FC<{
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.list}>
-          {album.map((t) => (
-            <TouchableOpacity
-              key={t.id}
-              style={[styles.team, { borderColor: colors.border }]}
-              onPress={() => navigate("team", { teamId: t.id })}
-            >
-              <Text style={[styles.teamText, { color: colors.text }]}>
-                {t.nome} - {t.id}
-              </Text>
-              {(() => {
-                const teamStats = selectTeamStats(t);
-                return (
-                  <Text style={[styles.teamSub, { color: colors.muted }]}>
-                    Total: {teamStats.total} — Tenho: {teamStats.tenho} —
-                    Faltantes: {teamStats.faltando} — Repetidas:{" "}
-                    {teamStats.repetidas}
+          {album.map((t) => {
+            const teamStats = selectTeamStats(t);
+            const percent =
+              teamStats.total === 0
+                ? 0
+                : Math.round((teamStats.tenho / teamStats.total) * 100);
+            const badgeColors = getBadgeColors(percent);
+
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.team, { borderColor: colors.border }]}
+                onPress={() => navigate("team", { teamId: t.id })}
+              >
+                <View style={styles.teamHeader}>
+                  <Text style={[styles.teamText, { color: colors.text }]}>
+                    {t.nome} - {t.id}
                   </Text>
-                );
-              })()}
-            </TouchableOpacity>
-          ))}
+                  <View
+                    style={[
+                      styles.teamBadge,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.teamBadgeText,
+                        { color: badgeColors.text },
+                      ]}
+                    >
+                      {percent}%
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.teamSub, { color: colors.muted }]}>
+                  Total: {teamStats.total} — Tenho: {teamStats.tenho} —
+                  Faltantes: {teamStats.faltando} — Repetidas:{" "}
+                  {teamStats.repetidas}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <TouchableOpacity
@@ -88,7 +123,20 @@ const styles = StyleSheet.create({
   searchTeam: { fontSize: 12, marginRight: 8 },
   list: { marginTop: 12 },
   team: { padding: 12, borderBottomWidth: 1 },
+  teamHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
   teamText: { fontSize: 16, fontWeight: "600" },
+  teamBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  teamBadgeText: { fontSize: 12, fontWeight: "800" },
   teamSub: {},
   link: { marginTop: 16, padding: 12, alignItems: "center" },
   linkText: { fontWeight: "600" },
