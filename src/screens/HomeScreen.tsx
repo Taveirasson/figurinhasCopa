@@ -45,7 +45,8 @@ export const HomeScreen: React.FC<{
                 return (
                   <Text style={[styles.teamSub, { color: colors.muted }]}>
                     Total: {teamStats.total} — Tenho: {teamStats.tenho} —
-                    Repetidas: {teamStats.repetidas}
+                    Faltantes: {teamStats.faltando} — Repetidas:{" "}
+                    {teamStats.repetidas}
                   </Text>
                 );
               })()}

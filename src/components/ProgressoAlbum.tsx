@@ -28,19 +28,19 @@ export const ProgressoAlbum: React.FC<{
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigate("repetidas")}
-          style={styles.itemTouchable}
-        >
-          <Text style={[styles.itemLink, { color: colors.primary }]}>
-            Repetidas: {totals.repetida}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           onPress={() => navigate("faltando")}
           style={styles.itemTouchable}
         >
           <Text style={[styles.itemLink, { color: colors.primary }]}>
             Faltam: {totals.faltando}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigate("repetidas")}
+          style={styles.itemTouchable}
+        >
+          <Text style={[styles.itemLink, { color: colors.primary }]}>
+            Repetidas: {totals.repetida}
           </Text>
         </TouchableOpacity>
       </View>
