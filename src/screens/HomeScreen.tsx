@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,9 +18,37 @@ export const HomeScreen: React.FC<{
     screen: "home" | "team" | "repetidas" | "data" | "faltando" | "tenho",
     params?: any,
   ) => void;
-}> = ({ navigate }) => {
+  initialScrollY?: number;
+  onScrollYChange?: (scrollY: number) => void;
+}> = ({ navigate, initialScrollY = 0, onScrollYChange }) => {
   const { album, loading, toggleStatus } = useAlbum();
   const { colors } = useTheme();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const didRestoreScrollRef = useRef(false);
+
+  const restoreScrollPosition = useCallback(() => {
+    if (didRestoreScrollRef.current || initialScrollY <= 0) return;
+
+    didRestoreScrollRef.current = true;
+    scrollViewRef.current?.scrollTo({
+      y: initialScrollY,
+      animated: false,
+    });
+  }, [initialScrollY]);
+
+  useEffect(() => {
+    didRestoreScrollRef.current = false;
+
+    const frame = requestAnimationFrame(restoreScrollPosition);
+    return () => cancelAnimationFrame(frame);
+  }, [restoreScrollPosition]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollYChange?.(event.nativeEvent.contentOffset.y);
+    },
+    [onScrollYChange],
+  );
 
   const getBadgeColors = (percent: number) => {
     if (percent >= 80) {
@@ -39,7 +69,14 @@ export const HomeScreen: React.FC<{
         <ProgressoAlbum album={album} navigate={navigate} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.container}
+        onContentSizeChange={restoreScrollPosition}
+        onLayout={restoreScrollPosition}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <View style={styles.list}>
           {album.map((t) => {
             const teamStats = selectTeamStats(t);

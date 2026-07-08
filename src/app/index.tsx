@@ -45,6 +45,7 @@ export default function Index() {
 
   const [route, setRoute] = useState<Route>({ name: "home" });
   const historyRef = useRef<Route[]>([]);
+  const homeScrollYRef = useRef(0);
 
   const navigate = (name: Route["name"], params?: any) => {
     // push current route to history unless navigating to home (reset)
@@ -92,7 +93,15 @@ export default function Index() {
             backgroundColor="transparent"
             barStyle={scheme === "dark" ? "light-content" : "dark-content"}
           />
-          {route.name === "home" && <HomeScreen navigate={navigate} />}
+          {route.name === "home" && (
+            <HomeScreen
+              navigate={navigate}
+              initialScrollY={homeScrollYRef.current}
+              onScrollYChange={(scrollY) => {
+                homeScrollYRef.current = scrollY;
+              }}
+            />
+          )}
           {route.name === "team" && (
             <TeamScreen route={route.params} navigate={navigate} />
           )}
