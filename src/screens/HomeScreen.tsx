@@ -85,6 +85,7 @@ export const HomeScreen: React.FC<{
                 ? 0
                 : Math.round((teamStats.tenho / teamStats.total) * 100);
             const badgeColors = getBadgeColors(percent);
+            const progressWidth = `${percent}%` as const;
 
             return (
               <TouchableOpacity
@@ -121,6 +122,23 @@ export const HomeScreen: React.FC<{
                   Faltantes: {teamStats.faltando} — Repetidas:{" "}
                   {teamStats.repetidas}
                 </Text>
+
+                <View
+                  style={[
+                    styles.teamProgressTrack,
+                    { backgroundColor: colors.border },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.teamProgressFill,
+                      {
+                        backgroundColor: badgeColors.text,
+                        width: progressWidth,
+                      },
+                    ]}
+                  />
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -175,6 +193,16 @@ const styles = StyleSheet.create({
   },
   teamBadgeText: { fontSize: 12, fontWeight: "800" },
   teamSub: {},
+  teamProgressTrack: {
+    height: 6,
+    borderRadius: 999,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  teamProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
   link: { marginTop: 16, padding: 12, alignItems: "center" },
   linkText: { fontWeight: "600" },
 });
